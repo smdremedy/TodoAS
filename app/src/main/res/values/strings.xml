@@ -6,6 +6,15 @@
   <string name="sign_in">Sign In</string>
   <string name="empty_field_error">This field can\'t be empty!</string>
   <string name="password_lenght_error">Password has to be at least %1$d chars, but is %2$d</string>
+    <string name="title_activity_todo_list">TodoListActivity</string>
+  <string name="add">Add</string>
+  <string name="refresh">Refresh</string>
+  <string name="logout">Logout</string>
+  <string name="confirm_logout">Confirm logout</string>
+  <string name="are_you_sure">Are you sure?</string>
+  <string name="what_needs_to_be_dane">What needs to be dane?</string>
+  <string name="done">Done</string>
+  <string name="add_todo">Add Todo</string>
 
 </resources>
 

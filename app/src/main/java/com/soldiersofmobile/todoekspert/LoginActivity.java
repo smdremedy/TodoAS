@@ -1,10 +1,9 @@
 package com.soldiersofmobile.todoekspert;
 
-import android.os.AsyncTask;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -17,7 +16,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity implements LoginCallback {
 
     public static final int PASSWORD_LENGTH = 4;
     @BindView(R.id.username_edit_text)
@@ -33,22 +32,19 @@ public class LoginActivity extends AppCompatActivity {
     @BindView(R.id.progress)
     ProgressBar progress;
 
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            if (msg.what == 1) {
-                signInButton.setEnabled(true);
-                progress.setVisibility(View.GONE);
-            }
-        }
-    };
+    private LoginManager loginManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+        loginManager = ((App) getApplication()).getLoginManager();
+
+        if (BuildConfig.DEBUG) {
+            usernameEditText.setText("test");
+            passwordEditText.setText("test");
+        }
     }
 
     @OnClick(R.id.sign_in_button)
@@ -76,75 +72,42 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void login(String username, String password) {
+        loginManager.login(username, password);
+    }
 
-
-//        signInButton.setEnabled(false);
-//        progress.setVisibility(View.VISIBLE);
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//
-//                try {
-//                    Thread.sleep(10000);
-//                    handler.sendEmptyMessage(1);
-//
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//
-//                }
-//            }
-//        }).start();
-
-        AsyncTask<String, Integer, String> asyncTask = new AsyncTask<String, Integer, String>() {
-
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                signInButton.setEnabled(false);
-                progress.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            protected void onProgressUpdate(Integer... values) {
-                super.onProgressUpdate(values);
-                progress.setProgress(values[0]);
-            }
-
-
-            @Override
-            protected String doInBackground(String... params) {
-                try {
-                    for (int i = 0; i < 100; i++) {
-                        Thread.sleep(50);
-                        publishProgress(i);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return validateCredentials(params);
-            }
-
-            @Nullable
-            private String validateCredentials(String[] params) {
-                return params[0].equals("test") && params[1].equals("test") ? null :
-                        "Invalid password";
-            }
-
-            @Override
-            protected void onPostExecute(String error) {
-                super.onPostExecute(error);
-                signInButton.setEnabled(true);
-                progress.setVisibility(View.GONE);
-                if (error == null) {
-                    finish();
-                } else {
-                    Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
-                }
-            }
-        };
-
-        asyncTask.execute(username, password);
-
+    @Override
+    protected void onStart() {
+        super.onStart();
+        loginManager.setLoginCallback(this);
 
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        loginManager.setLoginCallback(null);
+    }
+
+    @Override
+    public void showProgress(boolean enabled) {
+        signInButton.setEnabled(!enabled);
+        progress.setVisibility(enabled ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void handleError(String error) {
+        if (error == null) {
+            finish();
+            Intent intent = new Intent(this, TodoListActivity.class);
+            startActivity(intent);
+        } else {
+            Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void updateProgress(int progressValue) {
+        progress.setProgress(progressValue);
+    }
+
 }
