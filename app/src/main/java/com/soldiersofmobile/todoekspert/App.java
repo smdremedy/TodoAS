@@ -1,6 +1,8 @@
 package com.soldiersofmobile.todoekspert;
 
 import android.app.Application;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -41,7 +43,9 @@ public class App extends Application {
         Converter<ResponseBody, ErrorResponse> errorConverter
                 = retrofit.responseBodyConverter(ErrorResponse.class,
                 new Annotation[0]);
-        loginManager = new LoginManager(todoApi, errorConverter);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        loginManager = new LoginManager(todoApi, errorConverter, preferences);
     }
 
 
