@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="app_name">TodoEkspert</string>
+  <string name="enter_username">Enter username</string>
+  <string name="enter_password">Enter password</string>
+  <string name="sign_in">Sign In</string>
+  <string name="empty_field_error">This field can\'t be empty!</string>
+  <string name="password_lenght_error">Password has to be at least %1$d chars, but is %2$d</string>
+
+</resources>
+
