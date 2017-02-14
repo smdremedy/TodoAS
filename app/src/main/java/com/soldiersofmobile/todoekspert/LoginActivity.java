@@ -2,8 +2,6 @@ package com.soldiersofmobile.todoekspert;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -18,7 +16,6 @@ import butterknife.OnClick;
 
 public class LoginActivity extends AppCompatActivity implements LoginCallback {
 
-    public static final int PASSWORD_LENGTH = 4;
     @BindView(R.id.username_edit_text)
     EditText usernameEditText;
     @BindView(R.id.password_edit_text)
@@ -39,6 +36,7 @@ public class LoginActivity extends AppCompatActivity implements LoginCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+
         loginManager = ((App) getApplication()).getLoginManager();
 
         if (BuildConfig.DEBUG) {
@@ -51,41 +49,20 @@ public class LoginActivity extends AppCompatActivity implements LoginCallback {
     public void onClick() {
         String username = usernameEditText.getText().toString();
         String password = passwordEditText.getText().toString();
-
-        boolean hasErrors = false;
-        if (username.isEmpty()) {
-            usernameEditText.setError(getString(R.string.empty_field_error));
-            hasErrors = true;
-        }
-        int length = password.length();
-        if (length < PASSWORD_LENGTH) {
-            passwordEditText.setError(getString(R.string.password_lenght_error,
-                    PASSWORD_LENGTH, length));
-            hasErrors = true;
-        }
-
-        if (!hasErrors) {
-            login(username, password);
-        }
-
-
-    }
-
-    private void login(String username, String password) {
         loginManager.login(username, password);
     }
+
 
     @Override
     protected void onStart() {
         super.onStart();
         loginManager.setLoginCallback(this);
-
     }
 
     @Override
     protected void onStop() {
-        super.onStop();
         loginManager.setLoginCallback(null);
+        super.onStop();
     }
 
     @Override
@@ -95,19 +72,26 @@ public class LoginActivity extends AppCompatActivity implements LoginCallback {
     }
 
     @Override
-    public void handleError(String error) {
-        if (error == null) {
-            finish();
-            Intent intent = new Intent(this, TodoListActivity.class);
-            startActivity(intent);
-        } else {
-            Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
-        }
+    public void loginSuccess() {
+        finish();
+        Intent intent = new Intent(this, TodoListActivity.class);
+        startActivity(intent);
     }
 
     @Override
-    public void updateProgress(int progressValue) {
-        progress.setProgress(progressValue);
+    public void handleError(String error) {
+        Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void showUsernameEmptyError() {
+        usernameEditText.setError(getString(R.string.empty_field_error));
+    }
+
+    @Override
+    public void showPasswordLengthError(int length, int minPasswordLength) {
+        passwordEditText.setError(getString(R.string.password_lenght_error,
+                minPasswordLength, length));
     }
 
 }

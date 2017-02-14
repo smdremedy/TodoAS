@@ -16,10 +16,18 @@ import android.widget.Toast;
 public class TodoListActivity extends AppCompatActivity {
 
     public static final int REQUEST_CODE = 123;
+    private LoginManager loginManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        loginManager = ((App) getApplication()).getLoginManager();
+
+        if (loginManager.hasToLogin()) {
+            goToLogin();
+            return;
+        }
         setContentView(R.layout.activity_todo_list);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -33,6 +41,14 @@ public class TodoListActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+
+    }
+
+    private void goToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     @Override
@@ -60,14 +76,13 @@ public class TodoListActivity extends AppCompatActivity {
                 builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        finish();
+                        loginManager.logout();
+                        goToLogin();
                     }
                 });
                 builder.setNegativeButton("No", null);
                 builder.setCancelable(false);
                 builder.show();
-
-
                 break;
         }
         return super.onOptionsItemSelected(item);
