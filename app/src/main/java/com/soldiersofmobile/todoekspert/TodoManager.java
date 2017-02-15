@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.soldiersofmobile.todoekspert.api.TodoApi;
 import com.soldiersofmobile.todoekspert.api.model.TodosResponse;
+import com.soldiersofmobile.todoekspert.db.TodoDao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,8 @@ import retrofit2.Response;
 public class TodoManager implements Callback<TodosResponse> {
 
     private TodoApi todoApi;
+    private TodoDao todoDao;
+    private LoginManager loginManager;
 
     private int limit = 10;
     private int skip = 0;
@@ -41,9 +44,11 @@ public class TodoManager implements Callback<TodosResponse> {
         void showTodos(List<Todo> todos);
     }
 
-    public TodoManager(TodoApi todoApi) {
+    public TodoManager(TodoApi todoApi, TodoDao todoDao, LoginManager loginManager) {
 
         this.todoApi = todoApi;
+        this.todoDao = todoDao;
+        this.loginManager = loginManager;
     }
 
     public void fetchTodos(String token) {
@@ -65,6 +70,7 @@ public class TodoManager implements Callback<TodosResponse> {
             }
             for (Todo todo : results) {
                 Log.d("TAG", todo.toString());
+                todoDao.insertOrUpdate(todo, loginManager.getUserId());
             }
 
             todos.addAll(results);

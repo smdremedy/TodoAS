@@ -37,13 +37,18 @@ public class TodoAdapter extends BaseAdapter {
         return position;
     }
 
+
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_todo, parent, false);
-
+        View view = convertView;
+        if (view == null) {
+            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_todo, parent, false);
+            view.setTag(new ViewHolder(view));
+        }
         Todo todo = getItem(position);
 
-        ViewHolder viewHolder = new ViewHolder(view);
+        ViewHolder viewHolder = (ViewHolder) view.getTag();
         viewHolder.itemDoneCheckBox.setText(todo.getContent());
         viewHolder.itemDoneCheckBox.setChecked(todo.isDone());
         viewHolder.itemDeleteButton.setText(todo.getObjectId());
