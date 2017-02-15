@@ -1,5 +1,6 @@
 package com.soldiersofmobile.todoekspert;
 
+import android.database.Cursor;
 import android.util.Log;
 
 import com.soldiersofmobile.todoekspert.api.TodoApi;
@@ -38,6 +39,10 @@ public class TodoManager implements Callback<TodosResponse> {
 
     public void setTodoCallback(TodoCallback todoCallback) {
         this.todoCallback = todoCallback;
+    }
+
+    public Cursor getCursor() {
+        return todoDao.query(loginManager.getUserId(), true);
     }
 
     interface TodoCallback {
