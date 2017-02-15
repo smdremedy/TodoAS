@@ -12,7 +12,9 @@ import com.squareup.leakcanary.LeakCanary;
 
 import java.lang.annotation.Annotation;
 
+import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -20,9 +22,14 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class App extends Application {
 
     private LoginManager loginManager;
+    private TodoManager todoManager;
 
     public LoginManager getLoginManager() {
         return loginManager;
+    }
+
+    public TodoManager getTodoManager() {
+        return todoManager;
     }
 
     @Override
@@ -34,7 +41,14 @@ public class App extends Application {
                 //.setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
                 .create();
 
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(interceptor)
+                .build();
+
         Retrofit retrofit = new Retrofit.Builder()
+                .client(client)
                 .baseUrl("https://parseapi.back4app.com")
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
@@ -46,6 +60,7 @@ public class App extends Application {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         loginManager = new LoginManager(todoApi, errorConverter, preferences);
+        todoManager = new TodoManager(todoApi);
     }
 
 

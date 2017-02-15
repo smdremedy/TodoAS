@@ -11,24 +11,47 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
-public class TodoListActivity extends AppCompatActivity {
+import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
+public class TodoListActivity extends AppCompatActivity implements TodoManager.TodoCallback {
 
     public static final int REQUEST_CODE = 123;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    @BindView(R.id.content_todo_list)
+    ListView contentTodoList;
+    @BindView(R.id.fab)
+    FloatingActionButton fab;
+    @BindView(R.id.todo_progress)
+    ProgressBar todoProgress;
     private LoginManager loginManager;
+    private TodoManager todoManager;
+    //private ArrayAdapter<Todo> adapter;
+    private TodoAdapter adapter;
+    private ProgressBar footerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        loginManager = ((App) getApplication()).getLoginManager();
+        App application = (App) getApplication();
+        loginManager = application.getLoginManager();
+        todoManager = application.getTodoManager();
 
         if (loginManager.hasToLogin()) {
             goToLogin();
             return;
         }
         setContentView(R.layout.activity_todo_list);
+        ButterKnife.bind(this);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -39,6 +62,24 @@ public class TodoListActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+            }
+        });
+
+//        adapter = new ArrayAdapter<Todo>(this,
+//                R.layout.item_todo, R.id.item_done_check_box, todoManager.getTodos());
+        adapter = new TodoAdapter();
+        adapter.addAll(todoManager.getTodos());
+
+        contentTodoList.setAdapter(adapter);
+        contentTodoList.setEmptyView(todoProgress);
+        footerView = new ProgressBar(this);
+        contentTodoList.addFooterView(footerView);
+        contentTodoList.setOnScrollListener(new EndlessScrollListener() {
+
+            @Override
+            public boolean onLoadMore(int page, int totalItemsCount) {
+                refresh();
+                return true;
             }
         });
 
@@ -67,6 +108,7 @@ public class TodoListActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_CODE);
                 break;
             case R.id.action_refresh:
+                refresh();
                 break;
             case R.id.action_logout:
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -88,6 +130,32 @@ public class TodoListActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void refresh() {
+
+        todoManager.fetchTodos(loginManager.getToken());
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        todoManager.setTodoCallback(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        todoManager.setTodoCallback(null);
+    }
+
+    @Override
+    public void showTodos(List<Todo> todos) {
+        adapter.addAll(todos);
+        if (todoManager.isDone()) {
+            contentTodoList.removeFooterView(footerView);
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -98,4 +166,6 @@ public class TodoListActivity extends AppCompatActivity {
             }
         }
     }
+
+
 }

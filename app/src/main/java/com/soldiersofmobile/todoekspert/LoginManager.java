@@ -4,7 +4,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.soldiersofmobile.todoekspert.api.TodoApi;
-import com.soldiersofmobile.todoekspert.api.User;
+import com.soldiersofmobile.todoekspert.api.model.User;
 
 import java.io.IOException;
 
@@ -30,6 +30,14 @@ public class LoginManager implements Callback<User> {
 
     private String userId;
     private String token;
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getToken() {
+        return token;
+    }
 
     public LoginManager(TodoApi todoApi, Converter<ResponseBody, ErrorResponse> errorConverter, SharedPreferences preferences) {
         this.todoApi = todoApi;

@@ -1,8 +1,13 @@
 package com.soldiersofmobile.todoekspert.api;
 
+import com.soldiersofmobile.todoekspert.api.model.TodosResponse;
+import com.soldiersofmobile.todoekspert.api.model.User;
+
 import retrofit2.Call;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.Headers;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface TodoApi {
@@ -14,4 +19,15 @@ public interface TodoApi {
     })
     @GET("/login")
     Call<User> getLogin(@Query("username") String username, @Query("password") String password);
+
+    @Headers({
+            "X-Parse-Application-Id: X7HiVehVO7Zg9ufo0qCDXVPI3z0bFpUXtyq2ezYL",
+            "X-Parse-REST-API-Key: LCTpX53aBmbtIXOtFmDb9dklESKUd0q58hFbnRYc"
+    })
+    @GET("/classes/Todo")
+    Call<TodosResponse> getTodos(@Header("X-Parse-Session-Token") String token,
+                                 @Query("limit") int limit,
+                                 @Query("skip") int skip);
+
+
 }

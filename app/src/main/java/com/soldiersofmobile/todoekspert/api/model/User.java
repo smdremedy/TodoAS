@@ -1,4 +1,4 @@
-package com.soldiersofmobile.todoekspert.api;
+package com.soldiersofmobile.todoekspert.api.model;
 
 import com.google.gson.annotations.SerializedName;
 
