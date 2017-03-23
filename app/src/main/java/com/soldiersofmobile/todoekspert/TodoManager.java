@@ -7,6 +7,7 @@ import com.soldiersofmobile.todoekspert.api.TodoApi;
 import com.soldiersofmobile.todoekspert.api.model.TodosResponse;
 import com.soldiersofmobile.todoekspert.db.TodoDao;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,52 +20,29 @@ public class TodoManager implements Callback<TodosResponse> {
     private TodoApi todoApi;
     private TodoDao todoDao;
     private LoginManager loginManager;
-
     private int limit = 10;
     private int skip = 0;
     private Call<TodosResponse> call;
     private List<Todo> todos = new ArrayList<>();
-
     private boolean done;
-
-    public boolean isDone() {
-        return done;
-    }
-
     private TodoCallback todoCallback;
 
-    public List<Todo> getTodos() {
-        return todos;
-    }
-
-    public void setTodoCallback(TodoCallback todoCallback) {
-        this.todoCallback = todoCallback;
-    }
-
-    public Cursor getCursor() {
-        return todoDao.query(loginManager.getUserId(), true);
-    }
-
-    interface TodoCallback {
-        void showTodos(List<Todo> todos);
-    }
-
-    public TodoManager(TodoApi todoApi, TodoDao todoDao, LoginManager loginManager) {
+    public TodoManager(
+            TodoApi todoApi,
+            TodoDao todoDao,
+            LoginManager loginManager
+    ) {
 
         this.todoApi = todoApi;
         this.todoDao = todoDao;
         this.loginManager = loginManager;
     }
 
-    public void fetchTodos(String token) {
-
-        call = todoApi.getTodos(token, limit, skip);
-        call.enqueue(this);
-
-    }
-
     @Override
-    public void onResponse(Call<TodosResponse> call, Response<TodosResponse> response) {
+    public void onResponse(
+            Call<TodosResponse> call,
+            Response<TodosResponse> response
+    ) {
         if (response.isSuccessful()) {
             TodosResponse todosResponse = response.body();
 
@@ -87,7 +65,51 @@ public class TodoManager implements Callback<TodosResponse> {
     }
 
     @Override
-    public void onFailure(Call<TodosResponse> call, Throwable t) {
+    public void onFailure(
+            Call<TodosResponse> call,
+            Throwable t
+    ) {
 
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public List<Todo> getTodos() {
+        return todos;
+    }
+
+    public void setTodoCallback(TodoCallback todoCallback) {
+        this.todoCallback = todoCallback;
+    }
+
+    public Cursor getCursor() {
+        return todoDao.query(loginManager.getUserId(), true);
+    }
+
+    public void fetchTodosSync() {
+        call = todoApi.getTodos(loginManager.getToken(), 100, 0);
+        try {
+            Response<TodosResponse> response = call.execute();
+            if (response.isSuccessful()) {
+                for (Todo todo : response.body().getResults()) {
+                    todoDao.insertOrUpdate(todo, loginManager.getUserId());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void fetchTodos(String token) {
+
+        call = todoApi.getTodos(token, limit, skip);
+        call.enqueue(this);
+    }
+
+    interface TodoCallback {
+
+        void showTodos(List<Todo> todos);
     }
 }

@@ -1,7 +1,10 @@
 package com.soldiersofmobile.todoekspert;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -29,7 +32,6 @@ import butterknife.ButterKnife;
 public class TodoListActivity extends AppCompatActivity implements TodoManager.TodoCallback {
 
     public static final int REQUEST_CODE = 123;
-
     private static final String[] FROM = {
             TodoDao.C_CONTENT,
             TodoDao.C_DONE,
@@ -40,7 +42,6 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
             R.id.item_done_check_box,
             R.id.item_delete_button
     };
-
     @BindView(R.id.toolbar)
     Toolbar toolbar;
     @BindView(R.id.content_todo_list)
@@ -55,6 +56,17 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
     //private TodoAdapter adapter;
     private SimpleCursorAdapter adapter;
     private ProgressBar footerView;
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(
+                final Context context,
+                final Intent intent
+        ) {
+            Cursor cursor = todoManager.getCursor();
+            adapter.swapCursor(cursor);
+            Toast.makeText(context, "Refreshed", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +85,6 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,19 +94,24 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
             }
         });
 
-//        adapter = new ArrayAdapter<Todo>(this,
-//                R.layout.item_todo, R.id.item_done_check_box, todoManager.getTodos());
-//        adapter = new TodoAdapter();
-//        adapter.addAll(todoManager.getTodos());
+        //        adapter = new ArrayAdapter<Todo>(this,
+        //                R.layout.item_todo, R.id.item_done_check_box, todoManager.getTodos());
+        //        adapter = new TodoAdapter();
+        //        adapter.addAll(todoManager.getTodos());
 
         Cursor cursor = todoManager.getCursor();
-        
+
         adapter = new SimpleCursorAdapter(this, R.layout.item_todo, cursor,
-                FROM, TO, 0);
+                FROM, TO, 0
+        );
         adapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
             @Override
-            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
-                if(columnIndex == cursor.getColumnIndex(TodoDao.C_DONE)) {
+            public boolean setViewValue(
+                    View view,
+                    Cursor cursor,
+                    int columnIndex
+            ) {
+                if (columnIndex == cursor.getColumnIndex(TodoDao.C_DONE)) {
                     boolean done = cursor.getInt(columnIndex) > 0;
                     CheckBox checkBox = (CheckBox) view;
                     checkBox.setChecked(done);
@@ -109,27 +125,50 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
         footerView = new ProgressBar(this);
         contentTodoList.addFooterView(footerView);
         contentTodoList.setOnScrollListener(new EndlessScrollListener() {
-
             @Override
-            public boolean onLoadMore(int page, int totalItemsCount) {
+            public boolean onLoadMore(
+                    int page,
+                    int totalItemsCount
+            ) {
                 refresh();
                 return true;
             }
         });
-
-
     }
 
-    private void goToLogin() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        startActivity(intent);
-        finish();
+    @Override
+    protected void onStart() {
+        super.onStart();
+        todoManager.setTodoCallback(this);
+        registerReceiver(receiver, new IntentFilter(RefreshIntentService.REFRESH_ACTION));
+    }
+
+    @Override
+    protected void onActivityResult(
+            int requestCode,
+            int resultCode,
+            Intent data
+    ) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Todo todo = (Todo) data.getParcelableExtra(AddTodoActivity.TODO);
+                Toast.makeText(this, todo.toString(), Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.todo_list, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        todoManager.setTodoCallback(null);
+        unregisterReceiver(receiver);
     }
 
     @Override
@@ -151,7 +190,10 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
 
                 builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    public void onClick(
+                            DialogInterface dialog,
+                            int which
+                    ) {
                         loginManager.logout();
                         goToLogin();
                     }
@@ -164,24 +206,6 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
         return super.onOptionsItemSelected(item);
     }
 
-    private void refresh() {
-
-        todoManager.fetchTodos(loginManager.getToken());
-
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        todoManager.setTodoCallback(this);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        todoManager.setTodoCallback(null);
-    }
-
     @Override
     public void showTodos(List<Todo> todos) {
         //adapter.addAll(todos);
@@ -190,16 +214,18 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
-                Todo todo = (Todo) data.getParcelableExtra(AddTodoActivity.TODO);
-                Toast.makeText(this, todo.toString(), Toast.LENGTH_SHORT).show();
-            }
-        }
+    private void goToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 
+    private void refresh() {
 
+        Intent intent = new Intent(this, RefreshIntentService.class);
+        startService(intent);
+
+        //todoManager.fetchTodos(loginManager.getToken());
+
+    }
 }
