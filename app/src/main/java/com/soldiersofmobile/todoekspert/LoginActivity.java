@@ -1,5 +1,7 @@
 package com.soldiersofmobile.todoekspert;
 
+import javax.inject.Inject;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -28,8 +30,8 @@ public class LoginActivity extends AppCompatActivity implements LoginCallback {
     LinearLayout activityLogin;
     @BindView(R.id.progress)
     ProgressBar progress;
-
-    private LoginManager loginManager;
+    @Inject
+    LoginManager loginManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,21 +39,13 @@ public class LoginActivity extends AppCompatActivity implements LoginCallback {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        loginManager = ((App) getApplication()).getLoginManager();
+        App.getTodoComponent(this).inject(this);
 
         if (BuildConfig.DEBUG) {
             usernameEditText.setText("test");
             passwordEditText.setText("test");
         }
     }
-
-    @OnClick(R.id.sign_in_button)
-    public void onClick() {
-        String username = usernameEditText.getText().toString();
-        String password = passwordEditText.getText().toString();
-        loginManager.login(username, password);
-    }
-
 
     @Override
     protected void onStart() {
@@ -89,9 +83,19 @@ public class LoginActivity extends AppCompatActivity implements LoginCallback {
     }
 
     @Override
-    public void showPasswordLengthError(int length, int minPasswordLength) {
+    public void showPasswordLengthError(
+            int length,
+            int minPasswordLength
+    ) {
         passwordEditText.setError(getString(R.string.password_lenght_error,
-                minPasswordLength, length));
+                minPasswordLength, length
+        ));
     }
 
+    @OnClick(R.id.sign_in_button)
+    public void onClick() {
+        String username = usernameEditText.getText().toString();
+        String password = passwordEditText.getText().toString();
+        loginManager.login(username, password);
+    }
 }

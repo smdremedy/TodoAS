@@ -1,6 +1,7 @@
 package com.soldiersofmobile.todoekspert;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -12,6 +13,9 @@ import com.google.gson.GsonBuilder;
 import com.soldiersofmobile.todoekspert.api.TodoApi;
 import com.soldiersofmobile.todoekspert.db.DBHelper;
 import com.soldiersofmobile.todoekspert.db.TodoDao;
+import com.soldiersofmobile.todoekspert.di.DaggerTodoComponent;
+import com.soldiersofmobile.todoekspert.di.TodoComponent;
+import com.soldiersofmobile.todoekspert.di.TodoModule;
 import com.squareup.leakcanary.LeakCanary;
 
 import java.lang.annotation.Annotation;
@@ -28,14 +32,7 @@ public class App extends Application {
 
     private LoginManager loginManager;
     private TodoManager todoManager;
-
-    public LoginManager getLoginManager() {
-        return loginManager;
-    }
-
-    public TodoManager getTodoManager() {
-        return todoManager;
-    }
+    private TodoComponent todoComponent;
 
     @Override
     public void onCreate() {
@@ -48,7 +45,12 @@ public class App extends Application {
         } else {
             Timber.plant(new Timber.Tree() {
                 @Override
-                protected void log(int priority, String tag, String message, Throwable t) {
+                protected void log(
+                        int priority,
+                        String tag,
+                        String message,
+                        Throwable t
+                ) {
 
                 }
             });
@@ -72,16 +74,32 @@ public class App extends Application {
 
         TodoApi todoApi = retrofit.create(TodoApi.class);
         Converter<ResponseBody, ErrorResponse> errorConverter
-                = retrofit.responseBodyConverter(ErrorResponse.class,
-                new Annotation[0]);
+                = retrofit.responseBodyConverter(
+                ErrorResponse.class,
+                new Annotation[0]
+        );
 
         TodoDao todoDao = new TodoDao(new DBHelper(this));
-
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         loginManager = new LoginManager(todoApi, errorConverter, preferences);
         todoManager = new TodoManager(todoApi, todoDao, loginManager);
+
+        todoComponent = DaggerTodoComponent.builder()
+                .todoModule(new TodoModule(this))
+                .build();
     }
 
+    public LoginManager getLoginManager() {
+        return loginManager;
+    }
 
+    public TodoManager getTodoManager() {
+        return todoManager;
+    }
+
+    public static TodoComponent getTodoComponent(Context context) {
+        App app = (App) context.getApplicationContext();
+        return app.todoComponent;
+    }
 }

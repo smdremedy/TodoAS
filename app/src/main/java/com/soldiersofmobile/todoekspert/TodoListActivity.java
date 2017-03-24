@@ -26,6 +26,8 @@ import com.soldiersofmobile.todoekspert.db.TodoDao;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -50,7 +52,9 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
     FloatingActionButton fab;
     @BindView(R.id.todo_progress)
     ProgressBar todoProgress;
-    private LoginManager loginManager;
+
+    @Inject
+    LoginManager loginManager;
     private TodoManager todoManager;
     //private ArrayAdapter<Todo> adapter;
     //private TodoAdapter adapter;
@@ -71,10 +75,9 @@ public class TodoListActivity extends AppCompatActivity implements TodoManager.T
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         App application = (App) getApplication();
-        loginManager = application.getLoginManager();
         todoManager = application.getTodoManager();
+        App.getTodoComponent(this).inject(this);
 
         if (loginManager.hasToLogin()) {
             goToLogin();

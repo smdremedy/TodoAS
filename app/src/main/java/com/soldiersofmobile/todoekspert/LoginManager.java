@@ -8,12 +8,16 @@ import com.soldiersofmobile.todoekspert.api.model.User;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Converter;
 import retrofit2.Response;
 
+//@Singleton
 public class LoginManager implements Callback<User> {
 
     private static final int MIN_PASSWORD_LENGTH = 4;
@@ -39,6 +43,7 @@ public class LoginManager implements Callback<User> {
         return token;
     }
 
+    //@Inject
     public LoginManager(TodoApi todoApi, Converter<ResponseBody, ErrorResponse> errorConverter, SharedPreferences preferences) {
         this.todoApi = todoApi;
         this.errorConverter = errorConverter;
